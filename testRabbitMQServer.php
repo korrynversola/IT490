@@ -5,14 +5,17 @@ require_once('get_host_info.inc');
 require_once('rabbitMQLib.inc');
 require_once('login.php.inc');
 
-function doLogin($username,$password)
+require_once('dbConnection.php'); //connects to the database
+require_once('dbFunctions.php'); //functions for the database
+
+/*function doLogin($email,$password)
 {
-    // lookup username in databas
-    // check password
+    lookup username in databas
+     check password
     $login = new loginDB();
-    return $login->validateLogin($username,$password);
-    //return false if not valid
-}
+    return $login->validateLogin($email,$password);
+    return false if not valid
+}*/
 
 function requestProcessor($request)
 {
@@ -25,7 +28,7 @@ function requestProcessor($request)
   switch ($request['type'])
   {
     case "login":
-      return doLogin($request['username'],$request['password']);
+	    return doLogin($request['email'],$request['password']);
     case "validate_session":
       return doValidate($request['sessionId']);
   }

@@ -6,7 +6,7 @@ private $logindb;
 
 public function __construct()
 {
-	$this->logindb = new mysqli("127.0.0.1","root","12345","login");
+	$this->logindb = new mysqli("localhost","kav32","spring23","IT490");
 
 	if ($this->logindb->connect_errno != 0)
 	{
@@ -16,22 +16,22 @@ public function __construct()
 	echo "correctly connected to database".PHP_EOL;
 }
 
-public function validateLogin($username,$password)
+public function validateLogin($email,$password)
 {
-	$un = $this->logindb->real_escape_string($username);
-	$pw = $this->logindb->real_escape_string($password);
-	$statement = "select * from users where screenname = '$un'";
+	$email = $this->logindb->real_escape_string($email);
+	$password = $this->logindb->real_escape_string($password);
+	$statement = "select * from Users where email = '$email'";
 	$response = $this->logindb->query($statement);
 
 	while ($row = $response->fetch_assoc())
 	{
-		echo "checking password for $username".PHP_EOL;
+		echo "checking password for $email".PHP_EOL;
 		if ($row["password"] == $pw)
 		{
-			echo "passwords match for $username".PHP_EOL;
+			echo "passwords match for $email".PHP_EOL;
 			return 1;// password match
 		}
-		echo "passwords did not match for $username".PHP_EOL;
+		echo "passwords did not match for $email".PHP_EOL;
 	}
 	return 0;//no users matched username
 }
