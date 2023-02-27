@@ -1,0 +1,9 @@
+CREATE TABLE IF NOT EXISTS Groceries (
+	groceryID INT AUTO_INCREMENT,
+	item VARCHAR(255) NOT NULL,
+	expirationDate DATE NOT NULL,
+	PRIMARY KEY (groceryID)	
+);
+
+ALTER TABLE Groceries ADD COLUMN buyDate DATE;
+ALTER TABLE Groceries ADD COLUMN email VARCHAR(255) FOREIGN KEY (email) REFERENCES Users(email);
