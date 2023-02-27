@@ -2,14 +2,20 @@
 <?php
 
 function dbConnection() {
-	$mydb = new mysqli('localhost', 'kav32', 'spring23', 'IT490');
+	$hostname = 'localhost';
+	$user = 'kav32';
+	$password = 'spring23';
+	$dbName = 'IT490';
 
+	$mydb = new mysqli($hostname, $user, $password, $dbName);
+	
 	if ($mydb->errno != 0) {
 	echo "Failed to connect to database: ". #mydb->error . PHP_EOL;
 	exit(0);
 	}
 
-echo "Successfully connected to database.".PHP_EOL;
-return $mydb;
+	echo "Successfully connected to database.".PHP_EOL;
+	return $mydb;
+}
 
 ?>
