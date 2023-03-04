@@ -26,7 +26,7 @@ function requestProcessor($request) {
 	return array("returnCode" => '0', 'message'=>"Server received request and processed");
 }
 
-$authServer = new rabbitMQServer("testRabbitMQ.ini","testServer");
+$authServer = new rabbitMQServer("serversMQ.ini","authServer");
 $authServer->process_requests('requestProcessor');
 exit();
 ?>

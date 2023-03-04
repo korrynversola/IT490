@@ -18,23 +18,27 @@ function requestProcessor($request) {
  		case "keywordrecipe":
 			return searchKeywordRecipe($request['keyword']);
 		case "groceryrecipe":
-			return searchGroceryRecipe($request['sessionID'], $request['item']);
+			return searchGroceryRecipe($request['sessionID']);
 		case "expirerecipe":
-			return searchExpireRecipe($request['sessionID'], $request['item']);
+			return searchExpireRecipe($request['sessionID']);
 		case "grocerylist":
 			return genGroceryList($request['sessionID'], $request['search']);
 		case "rateRecipe":
 			return rateRecipe($request['sessionID'], $request['rating']);
-		case "storeRecipe";
+		case "storeRecipe":
 			return storeRecipe($request['sessionID'], $request['name']);
+		case "addGroceries":
+			return addGroceries($request['sessionID'], $request['groceries']);
+		case "userGroceries":
+			return getUserGroceries($request['sessionID']);
+
 	}
 
 	return array("returnCode" => '0', 'message'=>"Server received request and processed");
 }
 
-$appServer = new rabbitMQServer("testRabbitMQ.ini","testServer");
+$appServer = new rabbitMQServer("serversMQ.ini","appServer");
 
 $appServer->process_requests('requestProcessor');
 exit();
 ?>
-
