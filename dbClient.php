@@ -5,7 +5,7 @@ require_once('get_host_info.inc');
 require_once('rabbitMQLib.inc');
 
 function dbClient($request) {
-	$client = new rabbitMQClient("dmzRabbitMQ.ini","testServer");
+	$client = new rabbitMQClient("serversMQ.ini","DMZServer");
 	$response = $client->send_request($request);
 	return $response;
 }

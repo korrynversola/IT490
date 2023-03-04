@@ -6,8 +6,9 @@ require_once('rabbitMQLib.inc');
 
 require_once('login.php.inc');
 require_once('dbConnection.php'); //establishes connection to database
-require_once('testRabbitMQClient.php'); //sends requests to dmz
+require_once('dbClient.php'); //sends requests to dmz
 
+//function to create session
 function createSession($email) {
 	$mydb = dbConnection();
 	$sessionID = SHA1($email.time());
@@ -16,6 +17,7 @@ function createSession($email) {
 	return $sessionID;
 }
 
+//function to valid session
 function validateSession($sessionID) {
 	$mydb = dbConnection();
 	$query = "SELECT UNIX_TIMESTAMP(creationTime) as epoch FROM Sessions WHERE sessionID = '$sessionID'";
@@ -36,6 +38,8 @@ function validateSession($sessionID) {
 	
 	}
 }
+
+//function for user login
 function doLogin($email, $password) {
 	$mydb = dbConnection();
 	$hash = SHA1($password);
@@ -52,6 +56,7 @@ function doLogin($email, $password) {
 	}
 }
 
+//function for user registration
 function doRegister($first, $last, $email, $password) {
 	$mydb = dbConnection();
 	$hash = SHA1($password);
@@ -67,7 +72,7 @@ function doRegister($first, $last, $email, $password) {
 	}
 }
 
-
+//function to retrieve email from sessionID
 function selectEmailFromSession ($sessionID) {
  	$mydb = dbConnection();
 	$query = "SELECT email FROM Sessions WHERE sessionID = '$sessionID'";
@@ -78,15 +83,26 @@ function selectEmailFromSession ($sessionID) {
 	}
 }
 
-/*
-function addGroceries($sessionID, $item, $expirationDate, $buyDate) {
+//function to add user's groceries
+function addGroceries($sessionID, $groceries) {
 	$mydb = dbConnection();
 	$email = selectEmailFromSession($sessionID);
-	$query = "INSERT INTO Groceries (email, item, expirationDate, buyDate) VALUES ('$email', '$groceryItem', '$expirationDate', '$buyDate')";
-	$result = $mydb->query($query);
-	return json_encode(['message' => '']);
+	foreach($groceries as $grocery) {
+		$buyDate = $grocery['buyDate'];
+		$buyDate = $buyDate != null ? strtotime($buyDate) : 0;
+		$expirationDate = $grocery['expirationDate'];
+		$expirationDate = $expirationDate != null ? strtotime($expirationDate) : 0;
+		$item = $grocery['name'];
+		$image = $grocery['image'];
+		$ingredientID = $grocery['id'];
+		$amount = $grocery['amount'];
+		$query = "INSERT INTO Groceries (item, amount, expirationDate, buyDate, email, ingredientID, image) VALUES ('$item', '$amount', '$expirationDate', '$buyDate', '$email', '$ingredientID', '$image') ON DUPLICATE KEY UPDATE amount = amount+$amount";
+		$result = $mydb->query($query);
+	}
+	return json_encode(["message" => "added groceries"]);
 }
 
+/*
 function addToGroceryList($sessionID, $item) {
 	$mydb = dbConnection();
 	$email = selectEmailFromSession($sessionID);
@@ -94,37 +110,46 @@ function addToGroceryList($sessionID, $item) {
 	$result = $mydb->($query);
 	return json_encode(['message' => 'Added groceries to list']);
 }
+ */
 
-
-function getUserGroceries($sessionID, $bought) {
+//function to get the user's current groceries and grocery list
+function getUserGroceries($sessionID) {
 	$mydb = dbConnection();
 	$email = selectEmailFromSession($sessionID);
-	$bought = "SELECT * FROM Groceries WHERE email = '$email' AND buyDate IS NOT NULL";
-	$result = $mydb->query($bought);
-	if ($result->num_rows == 0) {
+	$bought = "SELECT * FROM Groceries WHERE email = '$email' AND buyDate != 0";
+	$groceryList = "SELECT * FROM Groceries WHERE email = '$email' AND buyDate = 0";
+	$boughtResults = $mydb->query($bought);
+	$listResults = $mydb->query($groceryList);	
+	if ($boughtResults->num_rows == 0 && $listResults->num_rows == 0) {
 		echo "no groceries";
-		return json_encode(['message' => 'no groceries']);
+		return false;
 	}
 	else {
-		$groceries = $result->fetch_all();
-		return json_encode([$groceries]);
+		$groceries = $boughtResults->fetch_all(MYSQLI_ASSOC);
+		$listItems = $listResults->fetch_all(MYSQLI_ASSOC);
+		var_dump($groceries, $listItems);
+		return json_encode(["groceries" => $groceries, "listItems" => $listItems]);
 	}
 }
 
-function getExpiringGroceries($sessionID, $item, $expirationDate) {
+//function to get user's groceries that are expiring in a week
+function getExpiringGroceries($sessionID) {
 	$mydb = dbConnection();
 	$email = selectEmailFromSession($sessionID);
-	$query = "SELECT * FROM Groceries WHERE email = '$email' AND expirationDate BETWEEN CURDATE() AND DATE_ADD(CURDATE(), INTERVAL 7 DAY)";
-	$result = $mydb->query($query);
-	if ($result->num_rows == 0) {
+	$query = "SELECT * FROM Groceries WHERE expirationDate < UNIX_TIMESTAMP(NOW()) + 604800)";
+	$expiringItems = $mydb->query($query);
+	if ($expiringItems->num_rows == 0) {
 		echo "no groceries are expiring this week";
-		return json_encode(['message' => 'no groceries are expiring this week');
+		return false;
 	}
 	else {
-		$expiring = $result->fetch_all();
-		return json_encode([$expiring]);
+		$expired = $result->fetch_all(MSQLI_ASSOC);
+		return (['expiringItems' => $expiringGroceries]);
 	}
 }
+
+
+/*
 function rateRecipe($sessionID, $recipeID, $rating) {
 	$mydb = dbConnection();
 	$email = selectEmailFromSession($sessionID);
@@ -154,6 +179,8 @@ function storeRecipe($recipe) {
 	return json_encode(['recipe' => $recipe]);
 }
  */
+
+//function to search for a recipe using a keyword
 function searchKeywordRecipe($keyword) {
 	$mydb = dbConnection();
 	$query = "SELECT * FROM Recipes WHERE name LIKE '%$keyword%'";
@@ -177,45 +204,42 @@ function dmzKeywordRecipe($name, $description, $instructions, $maxReadyTime) {
 	echo var_dump($response);
 	return $response;
 }
-*/
-function searchGroceryRecipe($sessionID, $item) {
+ */
+
+//function to search for recipes based on current groceries
+function searchGroceryRecipe($sessionID) {
 	$mydb = dbConnection();
 	$email = selectEmailFromSession($sessionID);
-	$query = "SELECT * FROM Groceries WHERE email = '$email' AND buyDate IS NOT NULL";
+	$query = "SELECT item FROM Groceries WHERE email = '$email' AND buyDate != 0 AND expirationDate > UNIX_TIMESTAMP(NOW())";
 	$result = $mydb->query($query);
-	if ($result->num_rows == 0) {
-		echo "no items in fridge";
-	}
-	else {
+	$groceryItems = $result->fetch_all();
+	/*
+	if ($groceryItems != false) {
 		$groceryRecipeQuery = "SELECT * FROM Recipes r JOIN Recipe_Ingredients ri ON r.recipeID = ri.recipeID JOIN Ingredients i ON i.ingredientID = ri.ingredientID JOIN Groceries g ON g.item = i.ingredient AND i.buyDate IS NOT NULL";
 		$groceryRecipeResult = $mydb->query($groceryRecipeQuery);
 		if ($groceryRecipeResult->num_rows == 0) {
-			$response = dbClient(["type" => "groceryrecipe", "groceryrecipe" => $item]);
-			echo $response;
-			return $response;
-		}
-	}
+	 */
+	$response = dbClient(["type" => "groceryrecipe", "groceryrecipe" => $groceryItems]);
+	echo $response;
+	return $response;
 }
-
-function searchExpireRecipe ($sessionID, $item) {
+ 
+//function to search for recipes based on user's expiring groceries
+function searchExpireRecipe ($sessionID) {
 	$mydb = dbConnection();
 	$email = selectEmailFromSession($sessionID);
-	$query = "SELECT * FROM Groceries WHERE email = '$email' AND expirationDate BETWEEN CURDATE() AND DATE_ADD(CURDATE(), INTERVAL 7 DAY)";
+$query = "SELECT item FROM Groceries WHERE email = '$email' AND expirationDate > UNIX_TIMESTAMP(NOW()) AND expirationDate < UNIX_TIMESTAMP(NOW()) + 604800 AND buyDate != 0";
 	$result = $mydb->query($query);
-	if ($result->num_rows == 0) {
-		echo "no grocery items will expire this week";
-		return json_encode(["message" => "no grocery items will expire this week"]);
-	}
-	else {
-		$expireRecipeQuery = "SELECT* FROM Recipes r JOIN Recipe_Ingredients ri ON r.recipeID = ri.recipeID JOIN Ingredients i ON i.ingredientID = ri.ingredientID JOIN Groceries g ON g.item = i.ingredient AND g.expirationDate BETWEEN CURDATE() AND DATE_ADD(CURDATE(), INTERVAL 7 DAY)";
-		if ($expireRecipeQuery->num_rows == 0) {
-			$response = dbClient(["type" => "expirerecipe", "expirerecipe" => $item]);
-			echo $response;
-			return $response;
-		}
-	}
+	/*
+		$expireRecipeQuery = "SELECT * FROM Recipes r JOIN Recipe_Ingredients ri ON r.recipeID = ri.recipeID JOIN Ingredients i ON i.ingredientID = ri.ingredientID JOIN Groceries g ON g.item = i.ingredient AND g.expirationDate BETWEEN CURDATE() AND DATE_ADD(CURDATE(), INTERVAL 7 DAY)";
+	 */
+	$expired = $result->fetch_all();
+	$response = dbClient(["type" => "expirerecipe", "expirerecipe" => $expired]);
+	echo $response;
+	return $response;
 }
 
+//function to generate a grocery list by searching
 function genGroceryList ($sessionID, $search) {
 	$mydb = dbConnection();
 	$email = selectEmailFromSession($sessionID);
@@ -223,7 +247,6 @@ function genGroceryList ($sessionID, $search) {
 	echo $response;
 	return $response;
 }
-
 
 ?>
 
