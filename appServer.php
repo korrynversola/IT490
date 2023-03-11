@@ -23,20 +23,31 @@ function requestProcessor($request) {
 			return searchExpireRecipe($request['sessionID']);
 		case "grocerylist":
 			return genGroceryList($request['sessionID'], $request['search']);
+		case "saveRecipe":
+			return saveRateRecipe($request['sessionID'], $request['recipe']);
 		case "rateRecipe":
-			return rateRecipe($request['sessionID'], $request['rating']);
-		case "storeRecipe":
-			return storeRecipe($request['sessionID'], $request['name']);
+			return saveRateRecipe($request['sessionID'], $request['recipe']);
+		case "viewRated":
+			return viewRatedRecipes($request['sessionID']);
+		case "userRecipe":
+			return storeUserRecipe($request['sessionID'], $request['userRecipe']);
 		case "addGroceries":
 			return addGroceries($request['sessionID'], $request['groceries']);
 		case "userGroceries":
 			return getUserGroceries($request['sessionID']);
-
+		default:
+			return logerror($request['type'], $request['error']);
 	}
 
 	return array("returnCode" => '0', 'message'=>"Server received request and processed");
 }
 
+function logerror($type, $error) {
+	$file_data = $error;
+	$file_data .= file_get_contents($type.'.txt');
+	file_put_contents($type.'.txt', $file_data);
+	return json_encode(["message" => "Error received"]);
+}
 $appServer = new rabbitMQServer("serversMQ.ini","appServer");
 
 $appServer->process_requests('requestProcessor');

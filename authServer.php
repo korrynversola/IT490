@@ -22,8 +22,17 @@ function requestProcessor($request) {
                 	return validateSession($request['sessionID']);
         	case "register":
                 	return doRegister($request['fname'],$request['lname'],$request['email'],$request['password']);
+		default:
+			return logerror($request['type'], $request['error']);
 	}
 	return array("returnCode" => '0', 'message'=>"Server received request and processed");
+}
+
+function logerror($type, $error) {
+        $file_data = $error;
+        $file_data .= file_get_contents($type.'.txt');
+        file_put_contents($type.'.txt', $file_data);
+        return json_encode(["message" => "Error received"]);
 }
 
 $authServer = new rabbitMQServer("serversMQ.ini","authServer");
