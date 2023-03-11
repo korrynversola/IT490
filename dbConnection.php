@@ -10,7 +10,7 @@ function dbConnection() {
 	$mydb = new mysqli($hostname, $user, $password, $dbName);
 	
 	if ($mydb->errno != 0) {
-	echo "Failed to connect to database: ". #mydb->error . PHP_EOL;
+	echo "Failed to connect to database: ". $mydb->error . PHP_EOL;
 	exit(0);
 	}
 
