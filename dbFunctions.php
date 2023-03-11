@@ -148,37 +148,54 @@ function getExpiringGroceries($sessionID) {
 	}
 }
 
-
-/*
-function rateRecipe($sessionID, $recipeID, $rating) {
+//function to save/rate recipe
+function saveRateRecipe($sessionID, $recipe) {
 	$mydb = dbConnection();
 	$email = selectEmailFromSession($sessionID);
-	$query = "INSERT INTO Rated_Recipes (email, recipeID, rating) VALUES ('$email','$recipeID', '$rating')";
+	$recipeID = $recipe["id"];
+	$title = $recipe["title"];
+	$imgURL = $recipe["image"];
+	$sourceURL = $recipe["sourceUrl"];
+	$rating = $recipe["rating"];
+	$query = "INSERT INTO Saved_Rated_Recipes (email, recipeID, title, image, sourceUrl, rating) VALUES ('$email','$recipeID', '$title', '$imgURL', '$sourceURL', '$rating') ON DUPLICATE KEY UPDATE rating = $rating";
+	$result = $mydb->query($query);
+	return json_encode(["message" => "succesfully saved/rated"]);
+}
+	
+/*S
+function rateRecipe($sessionID, $recipe) {
+	$mydb = dbConnection();
+	$email = selectEmailFromSession($sessionID);
+	$query = "INSERT INTO Saved_Rated_Recipes (email, recipeID, title, imgURL, sourceURL, rating) VALUES ('$email','$recipe['recipeID'], '$recipe['title]', '$recipe['imgURL'], '$recipe['sourceURL'], '$recipe['rating'])";
 	$result = $mydb->query($query);
 }
-
-function viewRatedRecipes($sessionID, $recipeID) {
+ */
+function viewRatedRecipes($sessionID) {
 	$mydb = dbConnection();
 	$email = selectEmailFromSession($sessionID);
-	$query = "SELECT name, rating FROM Rated_Recipes rr JOIN Recipes r ON r.recipeID = ri.recipeID JOIN Users u ON u.email == rr.email; 
+	$query = "SELECT * FROM Saved_Rated_Recipes WHERE email = '$email'"; 
 	$result = $mydb->query($query);
 	if ($result->num_rows == 0) {
 		echo "you have not rated any recipes";
-		return json_encode ["message" => "you have not rated any recipes"]);
+		return json_encode(["message" => "you have not rated any recipes"]);
 	}
 	else {
-		$userRatedRecipes = $result->fetch_all();
-		return $userRatedRecipes;
+		$userRatedRecipes = $result->fetch_all(MYSQLI_ASSOC);
+		return json_encode(["userRatedRecipes" => $userRatedRecipes]);
 	}
 }
 
-function storeRecipe($recipe) {
+function storeUserRecipe($sessionID, $userRecipe) {
 	$mydb = dbConnection();
-	$query = "INSERT INTO Recipes (name, description, instructions, maxReadyTime) VALUES ('$name', '$description', '$instructions', '$maxReadyTime)";
+	$name = $userRecipe['title'];
+	$description = $userRecipe['description'];
+	$instructions = $userRTecipe['instructions'];
+	$maxReadyTime = $userRecipe['maxReadyTime'];
+	$makerOfRecipe = $userRecipe['makerOfRecipe'];
+	$query = "INSERT INTO User_Recipes (name, description, instructions, maxReadyTime, makerOfRecipe) VALUES ('$name', '$description', '$instructions', '$maxReadyTime', '$makerOfRecipe')";
 	$result = $mydb->query($query);
-	return json_encode(['recipe' => $recipe]);
+	return json_encode(['messasge' => 'your recipe has been stored']);
 }
- */
 
 //function to search for a recipe using a keyword
 function searchKeywordRecipe($keyword) {
