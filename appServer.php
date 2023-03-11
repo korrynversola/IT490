@@ -31,6 +31,8 @@ function requestProcessor($request) {
 			return viewRatedRecipes($request['sessionID']);
 		case "userRecipe":
 			return storeUserRecipe($request['sessionID'], $request['userRecipe']);
+		case "getUserRecipe":
+			return getUserRecipe($request['sessionID']);
 		case "addGroceries":
 			return addGroceries($request['sessionID'], $request['groceries']);
 		case "userGroceries":
