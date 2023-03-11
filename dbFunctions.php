@@ -170,6 +170,8 @@ function rateRecipe($sessionID, $recipe) {
 	$result = $mydb->query($query);
 }
  */
+
+//function to view rated recipes for each user
 function viewRatedRecipes($sessionID) {
 	$mydb = dbConnection();
 	$email = selectEmailFromSession($sessionID);
@@ -185,16 +187,27 @@ function viewRatedRecipes($sessionID) {
 	}
 }
 
+//function to store user-created recipes
 function storeUserRecipe($sessionID, $userRecipe) {
 	$mydb = dbConnection();
-	$name = $userRecipe['title'];
+	$title = $userRecipe['title'];
 	$description = $userRecipe['description'];
-	$instructions = $userRTecipe['instructions'];
+	$instructions = $userRecipe['instructions'];
 	$maxReadyTime = $userRecipe['maxReadyTime'];
-	$makerOfRecipe = $userRecipe['makerOfRecipe'];
-	$query = "INSERT INTO User_Recipes (name, description, instructions, maxReadyTime, makerOfRecipe) VALUES ('$name', '$description', '$instructions', '$maxReadyTime', '$makerOfRecipe')";
+	$makerOfRecipe = selectEmailFromSession($sessionID);
+	$query = "INSERT INTO User_Recipes (title, description, instructions, maxReadyTime, makerOfRecipe) VALUES ('$title', '$description', '$instructions', '$maxReadyTime', '$makerOfRecipe')";
 	$result = $mydb->query($query);
 	return json_encode(['messasge' => 'your recipe has been stored']);
+}
+
+//function to retrieve user-created recipes from database
+function getUserRecipe($sessionID) {
+	$mydb = dbConnection();
+	$email = selectEmailFromSession($sessionID);
+	$query = "SELECT * FROM User_Recipes WHERE email = $email";
+	$result - $mydb->query($query);
+	$getUserRecipes = $result->fetch_all(MYSQLI_ASSOC);
+	return json_encode(["getUserRecipes" => $getUserRecipes]);
 }
 
 //function to search for a recipe using a keyword
