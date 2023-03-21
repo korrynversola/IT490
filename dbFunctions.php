@@ -73,7 +73,7 @@ function doRegister($first, $last, $email, $password) {
 }
 
 //function to retrieve email from sessionID
-function selectEmailFromSession ($sessionID) {
+function selectEmailFromSession($sessionID) {
  	$mydb = dbConnection();
 	$query = "SELECT email FROM Sessions WHERE sessionID = '$sessionID'";
 	$result = $mydb->query($query);
@@ -120,16 +120,29 @@ function getUserGroceries($sessionID) {
 	$groceryList = "SELECT * FROM Groceries WHERE email = '$email' AND buyDate = 0";
 	$boughtResults = $mydb->query($bought);
 	$listResults = $mydb->query($groceryList);	
+	/*
 	if ($boughtResults->num_rows == 0 && $listResults->num_rows == 0) {
 		echo "no groceries";
-		return false;
-	}
-	else {
-		$groceries = $boughtResults->fetch_all(MYSQLI_ASSOC);
-		$listItems = $listResults->fetch_all(MYSQLI_ASSOC);
-		var_dump($groceries, $listItems);
-		return json_encode(["groceries" => $groceries, "listItems" => $listItems]);
-	}
+		return json_encode(["groceries" => [], "listItems" =>;
+	}*/
+	$groceries = $boughtResults->fetch_all(MYSQLI_ASSOC);
+	$listItems = $listResults->fetch_all(MYSQLI_ASSOC);
+	var_dump($groceries, $listItems);
+	return json_encode(["groceries" => $groceries, "listItems" => $listItems]);
+}
+
+//function to move items from grocery list to fridge 
+function listToFridge($sessionID, $grocery) {
+	$mydb = dbConnection();
+	$email = selectEmailFromSession($sessionID);
+	$item = $grocery['item'];
+	$buyDate = $grocery['buyDate'];
+	$buyDate = $buyDate != null ? strtotime($buyDate) : 0;
+	$expirationDate = $grocery['expirationDate'];
+	$expirationDate = $expirationDate != null ? strtotime($expirationDate) : 0;
+	$query = "UPDATE Groceries SET buyDate = '$buyDate', expirationDate = '$expirationDate' WHERE item = '$item' AND email = '$email' AND buyDate = 0";
+	$result = $mydb->query($query);
+	return json_encode(["message" => "successfully moved item from grocery list to fridge"]);
 }
 
 //function to get user's groceries that are expiring in a week
@@ -204,8 +217,8 @@ function storeUserRecipe($sessionID, $userRecipe) {
 function getUserRecipe($sessionID) {
 	$mydb = dbConnection();
 	$email = selectEmailFromSession($sessionID);
-	$query = "SELECT * FROM User_Recipes WHERE email = $email";
-	$result - $mydb->query($query);
+	$query = "SELECT * FROM User_Recipes WHERE makerOfRecipe = '$email'";
+	$result = $mydb->query($query);
 	$getUserRecipes = $result->fetch_all(MYSQLI_ASSOC);
 	return json_encode(["getUserRecipes" => $getUserRecipes]);
 }
@@ -213,7 +226,7 @@ function getUserRecipe($sessionID) {
 //function to search for a recipe using a keyword
 function searchKeywordRecipe($keyword) {
 	$mydb = dbConnection();
-	$query = "SELECT * FROM Recipes WHERE name LIKE '%$keyword%'";
+	$query = "SELECT * FROM Recipes WHERE title LIKE '%$keyword%'";
 	$result = $mydb->query($query);
 	if ($result->num_rows == 0) {
 		$response = dbClient(["type" => "keywordrecipe", "keywordrecipe" => $keyword]);
@@ -223,10 +236,10 @@ function searchKeywordRecipe($keyword) {
 }
 
 /*
-function dmzKeywordRecipe($name, $description, $instructions, $maxReadyTime) {
+function dmzRecipe($title, $description, $instructions, $maxReadyTime) {
 	$request = array();
-	$request['type'] = 'keywordrecipe';
-	$request['titleMatch'] = $name;
+	$request['type'] = array('keywordrecipe', 'groceryrecipe', 'expirerecipe');
+	$request['titleMatch'] = $title;
 	$request['addRecipeInformation'] = $description;
 	$request['instructionsRequired'] = $instructions;
 	$request['maxReadyTime'] = $maxReadyTime;
@@ -234,6 +247,17 @@ function dmzKeywordRecipe($name, $description, $instructions, $maxReadyTime) {
 	echo var_dump($response);
 	return $response;
 }
+
+function addRecipeDB($title, $description, $instrictions, $maxReadyTime) {
+	$mydb = dbConnection();
+	for ($i = 0; $i < count($recipes); $i++) {
+		$recipeID = $recipes[$i]['recipeID'];
+		$title = $recipes[$i]['title'];
+		$description = $recipes[$i]['description'];
+		$instructions = $recipes[$i]['instructions'];
+		$maxReadyTiem = $recipes[$i]['maxReadyTime'];
+		$query = "INSERT INTO Recipes VALUES ('$recipeID', '$title', '$description', '$instructions', '$maxReadyTime')";
+		$result = $mydb->query($query);
  */
 
 //function to search for recipes based on current groceries
