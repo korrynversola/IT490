@@ -10,6 +10,8 @@ require_once('dbFunctions.php'); //functions for the database
 
 function requestProcessor($request) {
 	echo "received request".PHP_EOL;
+	$errorClient = new rabbitMQClient("serversMQ.ini", "ErrorLogging");
+	try {
 	var_dump($request);
 	if(!isset($request['type'])) {
 		return "ERROR: unsupported message type";
@@ -25,6 +27,11 @@ function requestProcessor($request) {
 		default:
 			return logerror($request['type'], $request['error']);
 	}
+	}
+	catch (Exception $e) {
+		$errorClient->send_request(['type' => 'DBerrors', 'error' => $e->getMessage()]);
+	}
+
 	return array("returnCode" => '0', 'message'=>"Server received request and processed");
 }
 

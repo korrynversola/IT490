@@ -8,12 +8,21 @@ require_once('login.php.inc');
 require_once('dbConnection.php'); //connects to the database
 require_once('dbFunctions.php'); //functions for the database
 
+
 function requestProcessor($request) {
 	echo "received request".PHP_EOL;
 	var_dump($request);
+	$errorClient = new rabbitMQClient("serversMQ.ini", "ErrorLogging");
+	try {
 	if(!isset($request['type'])) {
 		return "ERROR: unsupported message type";
 	}
+	
+	$validSession = json_decode(validateSession($request['sessionID']), true)['valid'];
+	if($validSession == 0) {
+		return json_encode(['valid' => 0]);
+	}
+
 	switch ($request['type']) {
  		case "keywordrecipe":
 			return searchKeywordRecipe($request['keyword']);
@@ -37,8 +46,15 @@ function requestProcessor($request) {
 			return addGroceries($request['sessionID'], $request['groceries']);
 		case "userGroceries":
 			return getUserGroceries($request['sessionID']);
+		case "listToFridge":
+			return listToFridge($request['sessionID'], $request['grocery']);
 		default:
 			return logerror($request['type'], $request['error']);
+	}
+	}
+
+	catch (Exxception $e) {
+		$errorClient->send_request(['type' => 'DBerrors', 'error' => $e->getMessage()]);
 	}
 
 	return array("returnCode" => '0', 'message'=>"Server received request and processed");
