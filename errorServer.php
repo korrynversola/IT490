@@ -1,7 +1,7 @@
 #!/usr/bin/php
 <?php
 require_once('path.inc');
-require_once('get_host_info.inc');
+//require_once('get_host_info.inc');
 require_once('rabbitMQLib.inc');
 require_once('login.php.inc');
 
@@ -9,7 +9,7 @@ function logerror($type, $error) {
 	$file_data = $error;
 	$error_log_name = $type.".txt";
 	$file_data .= file_get_contents($error_log_name);
-	file_put_contents($error_log_name, $file_data);
+
 	return json_encode(["message" => "Error Logged"]);
 }
 
