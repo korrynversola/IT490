@@ -23,8 +23,14 @@ function requestProcessor($request) {
 	*/
        switch ($request['type']) {
        		case "addBundle":
-			return addBundle($request['bundleName'], $request['bundlePath']);
-	}
+			return addBundle($request['bundleName'], $request['bundlePath'], $request['bundleMachine']);
+		case "rollout":
+			return rollout($request['bundleName'], $request['cluster'], false);
+		case "rollback":
+			return rollout($request['bundleName'], $request['cluster'], true);
+		case "confirmStatus":
+			return confirmStatus($request['bundleName'], $request['version'], $request['status']);
+       }
 }
 $appServer = new rabbitMQServer("rabbitServer.ini","rabbitServer");
 
