@@ -43,7 +43,7 @@ function addBundle($bundleName, $bundlePath, $bundleMachine) {
 function rollout($bundleName, $cluster, $rollback) {
 	$mydb = dbConnection();
 	$IPaddresses = ["QA" => [
-        "frontend" => "gc348@192.168.195.180",
+        "frontend" => "gc348@192.168.195.126",
         "dmz" => "sjm@192.168.195.96",
         "backend" =>"it490@192.168.195.167"
         ], "Production" => [
@@ -77,9 +77,7 @@ function rollout($bundleName, $cluster, $rollback) {
 	}*/
 	$exec = shell_exec("ssh $machineAddress 'rm -rf $bundlePath/*'");
 	echo $exec;
-	$execute = shell_exec("scp -r /home/kversola/git/rabbitmqphp_example/bundles/$bundleName-v$latestVersion/* $machineAddress:$bundlePath");
-	$restart = shell_exec("ssh $machineAddress -S 'sudo systemctl restart $bundleName'");
-	echo $restart;
+	$execute = shell_exec("rsync -av /home/kversola/git/rabbitmqphp_example/bundles/$bundleName-v$latestVersion/ $machineAddress:$bundlePath");
 }
 
 //function for status confirmation
